@@ -1,0 +1,394 @@
+* The Joy of Rust, and Why a You (As a Rubyist) Should Care
+** What is Rust
+** How to write Rust
+** Why should you care
+* About me
+Ben Reynolds
+github.com/benreyn
+
+* Some shoutouts
+- Ross Fuhrman
+- Steve Klabnik
+- The entire Rust team
+* What is Rust?
+  
+Rust is a systems programming language that
+runs blazingly fast, prevents segfaults, and guarantees thread safety.
+
+A language empowering everyone 
+to build reliable and efficient software.
+
+From the foreward to "The Book"
+
+It wasn’t always so clear, but the Rust programming language
+is fundamentally about empowerment: no matter what kind of code 
+you are writing now, Rust empowers you to reach farther, 
+to program with confidence in a wider variety of domains 
+than you did before.
+
+* A *very* brief intro to Rust
+** Hello World
+
+#+BEGIN_SRC rustic
+fn main() {
+    println!("Hello, World!");
+}  
+#+END_SRC
+
+#+RESULTS:
+: Hello, World!
+
+** Hello KC Ruby
+
+#+BEGIN_SRC rustic
+  fn main() {
+      let name = "KC Ruby";
+      println!("Hello, {}!", name);
+  }
+#+END_SRC
+
+#+RESULTS:
+: Hello, KC Ruby!
+
+** Cargo
+- Cargo is the primary CLI you will use when working with Rust
+- Cargo is both a build tool, and a package manager
+- Cargo is like Rust's version of bundler
+- Commands
+cargo new 
+cargo new --lib
+cargo init
+cargo build
+cargo run
+** Variables
+- Types must be declared for constants
+- Variables are immutable by default
+
+#+BEGIN_SRC rustic
+const FAVENUM: u32 = 12;
+
+fn main() {
+    let my_name = "Ben";
+    let mut my_age = 29;
+}
+#+END_SRC
+
+#+RESULTS:
+: error: Could not compile `cargoqM4uIx`.
+
+** Types
+Types are a huge part of rust, and deep topic
+worth its own talk, but here is a brief intro
+
+- bool: Boolean
+- u32: unsigned 32-bit integer
+- i32: signed 32-bit integer
+- char: unicode character
+- String and/or &str: Strings, strings, strings
+
+** Strings 
+- Strings in rust are a bit more complicated than you might
+initially expect them to be. 
+- This is a topic so complex that there is an entire chapter 
+in the rust book on it.
+- Could write a whole talk on String types alone
+ 
+#+BEGIN_SRC rustic
+fn main() {
+    let name = "a string literal"; // <- This is really a &str
+    let other_name = String::from("another string literal"); // <- This is REALLY a String
+}
+#+END_SRC
+
+** Control Flow
+
+*** If, else if, and else
+#+BEGIN_SRC rustic
+fn main() {
+    let x = 3;
+
+    if x < 5 {
+        println!("x is less than 5");
+    } else if x > 5 {
+        println!("x is greater than 5");
+    } else {
+        println!("x must be equal to 5");
+    }
+}
+#+END_SRC
+
+*** Match
+#+BEGIN_SRC rustic
+fn main() {
+    let number = 3;
+
+    match number {
+        1 => println!("One!"),
+        2 | 3 | 5 | 7 | 11 => println!("This is a prime"),
+        13...19 => println!("A teen"),
+        _ => println!("Nothing special"),
+    }
+}
+#+END_SRC
+
+*** Iteration
+
+#+BEGIN_SRC rustic
+  fn main() {
+      let arr = [10, 20, 30, 40, 50];
+
+      for element in arr.iter() {
+	  println!("the value is: {}", element);
+      }
+  }
+  
+fn 
+#+END_SRC
+
+#+RESULTS:
+: the value is: 10
+: the value is: 20
+: the value is: 30
+: the value is: 40
+: the value is: 50
+
+** Functions
+#+BEGIN_SRC rustic
+  fn fib(n: u32) -> u32 {
+      if n < 2 {
+	  n
+      } else {
+	  fib(n - 1) + fib(n - 2)
+      }
+  }
+  
+  fn say_hello(name: &str) {
+      println!("Hello, ", name);
+  }
+
+  fn main() {
+      let x = 10;
+      let result = fib(x);
+      println!("{}", result);
+  }
+#+END_SRC
+
+#+RESULTS:
+: 55
+ 
+* Why should I (a Rubyist) care
+** Low level speed with high level abstractions
+#+BEGIN_SRC rustic
+fn main() {
+
+    for i in 1..11 {
+	print!("{} ", i);
+    }
+    // output: 1 2 3 4 5 6 7 8 9 10
+
+    for i in (0..21).filter(|x| (x % 2 == 0)) {
+	print!("{} ", i);
+    }
+    // output: 0 2 4 6 8 10 12 14 16 18 20
+    
+    for i in (0..11).rev() {
+	print!("{} ", i);
+    }
+    // output: 10 9 8 7 6 5 4 3 2 1 0
+    
+    for i in (1..11).map(|x| x * x) {
+	print!("{} ", i);
+    }
+    // output: 1 4 9 16 25 36 49 64 81 100
+    
+    let result = (1..6).fold(0, |acc, x| acc + x * x);
+    println!("result = {}", result);
+    // output: result = 55
+    
+    for i in (0..11).rev().filter(|x| (x % 2 == 0)) {
+	print!("{} ", i);
+    }
+    // output: 10 8 6 4 2 0
+#+END_SRC
+
+#+BEGIN_SRC rustic
+fn main() {
+    let cities = vec!["Toronto", "New York", "Melbourne"];
+    let populations = [2_615_060, 8_550_405, ‎4_529_500];
+
+    let matrix = cities.iter().zip(populations.iter());
+
+    for (c, p) in matrix {
+	println!("{:10}: population = {}", c, p);
+    }
+}
+#+END_SRC
+
+#+RESULTS:
+: cargoOfrhVu
+
+** The famous String#blank? method
+*** The C version (fast_blank)
+#+BEGIN_SRC c
+
+#include <stdio.h>
+#include <ruby.h>
+#include <ruby/encoding.h>
+#include <ruby/re.h>
+#include <ruby/version.h>
+
+#define STR_ENC_GET(str) rb_enc_from_index(ENCODING_GET(str))
+
+#ifndef RUBY_API_VERSION_CODE
+# define ruby_version_before_2_2() 1
+#else
+# define ruby_version_before_2_2() (RUBY_API_VERSION_CODE < 20200)
+#endif
+
+static VALUE
+rb_str_blank_as(VALUE str)
+{
+  rb_encoding *enc;
+  char *s, *e;
+
+  enc = STR_ENC_GET(str);
+  s = RSTRING_PTR(str);
+  if (!s || RSTRING_LEN(str) == 0) return Qtrue;
+
+  e = RSTRING_END(str);
+  while (s < e) {
+    int n;
+    unsigned int cc = rb_enc_codepoint_len(s, e, &n, enc);
+
+    switch (cc) {
+      case 9:
+      case 0xa:
+      case 0xb:
+      case 0xc:
+      case 0xd:
+      case 0x20:
+      case 0x85:
+      case 0xa0:
+      case 0x1680:
+      case 0x2000:
+      case 0x2001:
+      case 0x2002:
+      case 0x2003:
+      case 0x2004:
+      case 0x2005:
+      case 0x2006:
+      case 0x2007:
+      case 0x2008:
+      case 0x2009:
+      case 0x200a:
+      case 0x2028:
+      case 0x2029:
+      case 0x202f:
+      case 0x205f:
+      case 0x3000:
+#if ruby_version_before_2_2()
+      case 0x180e:
+#endif
+          /* found */
+          break;
+      default:
+          return Qfalse;
+    }
+    s += n;
+  }
+  return Qtrue;
+}
+
+static VALUE
+rb_str_blank(VALUE str)
+{
+  rb_encoding *enc;
+  char *s, *e;
+
+  enc = STR_ENC_GET(str);
+  s = RSTRING_PTR(str);
+  if (!s || RSTRING_LEN(str) == 0) return Qtrue;
+
+  e = RSTRING_END(str);
+  while (s < e) {
+    int n;
+    unsigned int cc = rb_enc_codepoint_len(s, e, &n, enc);
+
+    if (!rb_isspace(cc) && cc != 0) return Qfalse;
+    s += n;
+  }
+  return Qtrue;
+}
+
+
+void Init_fast_blank( void )
+{
+  rb_define_method(rb_cString, "blank?", rb_str_blank, 0);
+  rb_define_method(rb_cString, "blank_as?", rb_str_blank_as, 0);
+}
+#+END_SRC
+*** The Rust version(turbo_blank)
+**** The Helix version
+
+https://github.com/hone/turbo_blank
+https://github.com/tildeio/helix
+
+#+BEGIN_SRC rustic
+
+#[macro_use]
+extern crate helix;
+
+declare_types! {
+    reopen class RubyString {
+        def is_blank(&self) -> bool {
+          // self.chars().all(|c| c.is_whitespace())
+          self.to_string().chars().all(|c| c.is_whitespace())
+        }
+    }
+}
+
+// Delete me:
+
+use helix::{UncheckedValue, ToRust};
+
+impl ToString for RubyString {
+    fn to_string(&self) -> String {
+        let checked = self.helix.to_checked().unwrap();
+        checked.to_rust()
+    }
+}
+
+#+END_SRC
+
+**** The Ruru Version
+
+https://github.com/d-unseductable/ruru
+
+#+BEGIN_SRC rustic
+#[macro_use]
+extern crate ruru;
+
+use ruru::{Boolean, Class, Object, RString};
+
+methods!(
+   RString,
+   itself,
+
+   fn string_is_blank() -> Boolean {
+       Boolean::new(itself.to_string().chars().all(|c| c.is_whitespace()))
+   }
+);
+
+#[no_mangle]
+pub extern fn initialize_string() {
+    Class::from_existing("String").define(|itself| {
+        itself.def("blank?", string_is_blank);
+    });
+}
+#+END_SRC
+
+* How can I learn more?
+Rust documentation, https://rust-lang.org/learn
+Rust on exercism.io, http://exercism.io/tracks/rust
+New Rustacean Podcast, http://www.newrustacean.com
+
