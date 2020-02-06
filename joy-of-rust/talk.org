@@ -1,15 +1,20 @@
-* The Joy of Rust, and Why a You (As a Rubyist) Should Care
+* The Joy of Rust (for Alchemists) 
 ** What is Rust
 ** How to write Rust
 ** Why should you care
 * About me
 Ben Reynolds
+Work at Zaarly
 github.com/benreyn
+twitter.com/benjamreynolds
 
 * Some shoutouts
-- Ross Fuhrman
+  
+- Brian Stevens
 - Steve Klabnik
 - The entire Rust team
+- elixirschool
+
 * What is Rust?
   
 Rust is a systems programming language that
@@ -35,25 +40,19 @@ fn main() {
 }  
 #+END_SRC
 
-#+RESULTS:
-: Hello, World!
-
-** Hello KC Ruby
+** Hello KC Elixir
 
 #+BEGIN_SRC rustic
   fn main() {
-      let name = "KC Ruby";
+      let name = "KC Elixir";
       println!("Hello, {}!", name);
   }
 #+END_SRC
 
-#+RESULTS:
-: Hello, KC Ruby!
-
 ** Cargo
 - Cargo is the primary CLI you will use when working with Rust
 - Cargo is both a build tool, and a package manager
-- Cargo is like Rust's version of bundler
+- Cargo is like Rust's version of mix
 - Commands
 cargo new 
 cargo new --lib
@@ -72,9 +71,6 @@ fn main() {
     let mut my_age = 29;
 }
 #+END_SRC
-
-#+RESULTS:
-: error: Could not compile `cargoqM4uIx`.
 
 ** Types
 Types are a huge part of rust, and deep topic
@@ -145,13 +141,6 @@ fn main() {
 fn 
 #+END_SRC
 
-#+RESULTS:
-: the value is: 10
-: the value is: 20
-: the value is: 30
-: the value is: 40
-: the value is: 50
-
 ** Functions
 #+BEGIN_SRC rustic
   fn fib(n: u32) -> u32 {
@@ -173,10 +162,26 @@ fn
   }
 #+END_SRC
 
-#+RESULTS:
-: 55
- 
-* Why should I (a Rubyist) care
+** Result Types
+#+BEGIN_SRC rustic
+  use std::num::ParseIntError;
+  use std::result::Result;
+
+  fn main() -> Result<(), ParseIntError> {
+      let x = "10";
+      let y = "not a number";
+      println!("{:?}", x.parse::<i32>()); // Ok(10)
+      println!("{:?}", y.parse::<i32>()); // Err(ParseIntError { kind: InvalidDigit })
+      let i = match x.parse::<i32>() {
+	  Ok(number) => number,
+	  Err(e) => return Err(e),
+      };
+      println!("{}", i);
+      Ok(())
+  }
+#+END_SRC
+   
+* Why should I (an Alchemist) care
 ** Low level speed with high level abstractions
 #+BEGIN_SRC rustic
 fn main() {
@@ -224,171 +229,40 @@ fn main() {
 }
 #+END_SRC
 
-#+RESULTS:
-: cargoOfrhVu
+** Calling Rust code from Elixir: [[https://github.com/rusterlium/rustler][Rustler]]
+   
+#+BEGIN_SRC elixir
+  def project do
+    [app: :my_app,
+     version: "0.1.0",
+     elixir: "~> 1.4",
+     build_embedded: Mix.env == :prod,
+     start_permanent: Mix.env == :prod,
+     compilers: [:rustler] ++ Mix.compilers,
+     rustler_crates: rustler_crates(),
+     deps: deps()]
+  end
 
-** The famous String#blank? method
-*** The C version (fast_blank)
-#+BEGIN_SRC c
-
-#include <stdio.h>
-#include <ruby.h>
-#include <ruby/encoding.h>
-#include <ruby/re.h>
-#include <ruby/version.h>
-
-#define STR_ENC_GET(str) rb_enc_from_index(ENCODING_GET(str))
-
-#ifndef RUBY_API_VERSION_CODE
-# define ruby_version_before_2_2() 1
-#else
-# define ruby_version_before_2_2() (RUBY_API_VERSION_CODE < 20200)
-#endif
-
-static VALUE
-rb_str_blank_as(VALUE str)
-{
-  rb_encoding *enc;
-  char *s, *e;
-
-  enc = STR_ENC_GET(str);
-  s = RSTRING_PTR(str);
-  if (!s || RSTRING_LEN(str) == 0) return Qtrue;
-
-  e = RSTRING_END(str);
-  while (s < e) {
-    int n;
-    unsigned int cc = rb_enc_codepoint_len(s, e, &n, enc);
-
-    switch (cc) {
-      case 9:
-      case 0xa:
-      case 0xb:
-      case 0xc:
-      case 0xd:
-      case 0x20:
-      case 0x85:
-      case 0xa0:
-      case 0x1680:
-      case 0x2000:
-      case 0x2001:
-      case 0x2002:
-      case 0x2003:
-      case 0x2004:
-      case 0x2005:
-      case 0x2006:
-      case 0x2007:
-      case 0x2008:
-      case 0x2009:
-      case 0x200a:
-      case 0x2028:
-      case 0x2029:
-      case 0x202f:
-      case 0x205f:
-      case 0x3000:
-#if ruby_version_before_2_2()
-      case 0x180e:
-#endif
-          /* found */
-          break;
-      default:
-          return Qfalse;
-    }
-    s += n;
-  }
-  return Qtrue;
-}
-
-static VALUE
-rb_str_blank(VALUE str)
-{
-  rb_encoding *enc;
-  char *s, *e;
-
-  enc = STR_ENC_GET(str);
-  s = RSTRING_PTR(str);
-  if (!s || RSTRING_LEN(str) == 0) return Qtrue;
-
-  e = RSTRING_END(str);
-  while (s < e) {
-    int n;
-    unsigned int cc = rb_enc_codepoint_len(s, e, &n, enc);
-
-    if (!rb_isspace(cc) && cc != 0) return Qfalse;
-    s += n;
-  }
-  return Qtrue;
-}
-
-
-void Init_fast_blank( void )
-{
-  rb_define_method(rb_cString, "blank?", rb_str_blank, 0);
-  rb_define_method(rb_cString, "blank_as?", rb_str_blank_as, 0);
-}
+  defp deps do
+    [{:rustler, "~> 0.8.0"}]
+  end
+  
 #+END_SRC
-*** The Rust version(turbo_blank)
-**** The Helix version
 
-https://github.com/hone/turbo_blank
-https://github.com/tildeio/helix
 
 #+BEGIN_SRC rustic
 
-#[macro_use]
-extern crate helix;
-
-declare_types! {
-    reopen class RubyString {
-        def is_blank(&self) -> bool {
-          // self.chars().all(|c| c.is_whitespace())
-          self.to_string().chars().all(|c| c.is_whitespace())
-        }
-    }
+#[rustler::nif]
+fn add(a: i64, b: i64) -> i64 {
+    a + b
 }
 
-// Delete me:
-
-use helix::{UncheckedValue, ToRust};
-
-impl ToString for RubyString {
-    fn to_string(&self) -> String {
-        let checked = self.helix.to_checked().unwrap();
-        checked.to_rust()
-    }
-}
+rustler::init!("Elixir.Math", [add]);
 
 #+END_SRC
-
-**** The Ruru Version
-
-https://github.com/d-unseductable/ruru
-
-#+BEGIN_SRC rustic
-#[macro_use]
-extern crate ruru;
-
-use ruru::{Boolean, Class, Object, RString};
-
-methods!(
-   RString,
-   itself,
-
-   fn string_is_blank() -> Boolean {
-       Boolean::new(itself.to_string().chars().all(|c| c.is_whitespace()))
-   }
-);
-
-#[no_mangle]
-pub extern fn initialize_string() {
-    Class::from_existing("String").define(|itself| {
-        itself.def("blank?", string_is_blank);
-    });
-}
-#+END_SRC
-
+   
 * How can I learn more?
 Rust documentation, https://rust-lang.org/learn
 Rust on exercism.io, http://exercism.io/tracks/rust
 New Rustacean Podcast, http://www.newrustacean.com
-
+Taking Elixir to the Metal with Rust, https://www.youtube.com/watch?v=lSLTwWqTbKQ
